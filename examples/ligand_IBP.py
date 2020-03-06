@@ -1,9 +1,9 @@
 import sys 
 
 sys.path.append('..') 
-from comparam.ligand import parameterization
+from comp_sim.ligand import parameterize_ligand
 
 pdb = './IBP.pdb'
-params = parameterization(
+params = parameterize_ligand(
     pdb, mol_charge=-1)
 
