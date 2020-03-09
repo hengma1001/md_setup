@@ -51,4 +51,7 @@ def run_at_temp(func):
         os.chdir(current_dir) 
     return wrapper
 
-    
+
+def to_pdb(file_pos, file_top, file_pdb): 
+    trj = mda.Universe(file_top, file_pos) 
+    trj.atoms.write(file_pdb)

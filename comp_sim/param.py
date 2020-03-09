@@ -6,7 +6,7 @@ from biobb_chemistry.babelm.babel_add_hydrogens import BabelAddHydrogens
 from biobb_chemistry.babelm.babel_minimize import BabelMinimize
 from biobb_chemistry.acpype.acpype_params_gmx import AcpypeParamsGMX
 
-from .utils import missing_hydrogen, remove_hydrogen, run_at_temp
+from .utils import missing_hydrogen, remove_hydrogen, run_at_temp, to_pdb
 
 # input_structure = './IBP.pdb' 
 # pH = 7
@@ -113,7 +113,7 @@ def parameterize_ligand(
     return ligand_dict
 
 
-def ParameterizeAMBER(pdb_lig, pdb_pro):
+def ParameterizeAMBER_comp(pdb_lig, pdb_pro):
     """
     Copied from InspireMD
     This function is pretty much a wrapper for antechamber & tleap. 
@@ -124,20 +124,50 @@ def ParameterizeAMBER(pdb_lig, pdb_pro):
     with open(f'leap.in', 'w+') as leap:
         leap.write("source leaprc.protein.ff14SBonlysc\n")
         leap.write("source leaprc.gaff\n")
+        leap.write("source leaprc.water.tip3p\n")
         leap.write("set default PBRadii mbondi3\n")
         leap.write(f"rec = loadPDB {pdb_pro} # May need full filepath?\n")
         leap.write("saveAmberParm rec apo.prmtop apo.inpcrd\n")
         leap.write("lig = loadmol2 lig.mol2\n")
         leap.write("loadAmberParams lig.frcmod\n")
-        leap.write("com = combine {rec lig}\n")
+        leap.write("comp = combine {rec lig}\n")
+        leap.write("solvatebox comp TIP3PBOX 15\n")
+        leap.write("addions comp Na+ 0\n")
+        leap.write("addions comp Cl- 0\n")
         leap.write("saveAmberParm lig lig.prmtop lig.inpcrd\n")
-        leap.write("saveAmberParm com com.prmtop com.inpcrd\n")
+        leap.write("saveAmberParm comp comp.prmtop comp.inpcrd\n")
         leap.write("quit\n")
     subprocess.check_output(f'tleap -f leap.in', shell=True)
-    if os.path.exists('com.prmtop') and os.path.exists('com.inpcrd'): 
-        return {'top': os.path.abspath('com.prmtop'), 
-                'pos': os.path.abspath('com.inpcrd')}
+    if os.path.exists('comp.prmtop') and os.path.exists('comp.inpcrd'): 
+        to_pdb('comp.inpcrd', 'comp.prmtop', 'comp.pdb')
+        return {'top': os.path.abspath('comp.prmtop'), 
+                'pos': os.path.abspath('comp.inpcrd'), 
+                'pdb': os.path.abspath('comp.pdb')}
     else: 
         raise Exception("Leap failed to build topology, check errors...")
 
+
+def ParameterizeAMBER_prot(pdb_pro):
+    """
+    This functions is to parameterize a single protein
+    """
+    with open('leap.in', 'w') as leap: 
+        leap.write("source leaprc.protein.ff14SBonlysc\n")
+        leap.write("source leaprc.gaff\n")
+        leap.write("source leaprc.water.tip3p\n")
+        leap.write("set default PBRadii mbondi3\n")
+        leap.write(f"prot = loadPDB {pdb_pro} # May need full filepath?\n")
+        leap.write("solvatebox prot TIP3PBOX 15\n")
+        leap.write("addions prot Na+ 0\n")
+        leap.write("addions prot Cl- 0\n")
+        leap.write("saveAmberParm prot prot.prmtop prot.inpcrd\n")
+        leap.write("quit\n")
+    subprocess.check_output(f'tleap -f leap.in', shell=True)
+    if os.path.exists('prot.prmtop') and os.path.exists('prot.inpcrd'): 
+        to_pdb('prot.inpcrd', 'prot.prmtop', 'prot.pdb')
+        return {'top': os.path.abspath('prot.prmtop'), 
+                'pos': os.path.abspath('prot.inpcrd'), 
+                'pdb': os.path.abspath('prot.pdb')}
+    else: 
+        raise Exception("Leap failed to build topology, check errors...")
 
