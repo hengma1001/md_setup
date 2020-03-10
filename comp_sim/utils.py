@@ -1,5 +1,6 @@
 import os 
 import tempfile 
+import subprocess
 import numpy as np 
 import MDAnalysis as mda 
 
@@ -52,6 +53,36 @@ def run_at_temp(func):
     return wrapper
 
 
+def clean_pdb(pdb_file): 
+    """
+    Remove all entris in pdb files other than `ATOM` and HETATM`
+    """
+    with open(pdb_file, 'r') as pdb: 
+        pdb_atoms = [
+            line for line in pdb 
+            if line.startswith('ATOM') or line.startswith('HETATM')]
+    with open(pdb_file, 'w') as pdb: 
+        pdb.write(''.join(pdb_atoms))
+
+
 def to_pdb(file_pos, file_top, file_pdb): 
     trj = mda.Universe(file_top, file_pos) 
     trj.atoms.write(file_pdb)
+
+
+def add_hydrogen(pdb_file): 
+    """
+    add hydrogens to pdb structure if missing hydrogen atoms 
+    obabel -ipdb adp.pdb -h -opdb >  adph.pdb
+    """
+    if missing_hydrogen(pdb_file): 
+        pdb_h = pdb_file[:-4] + '_h.pdb'
+        subprocess.check_output(
+            f'obabel -ipdb {pdb_file} -h -opdb >  {pdb_h}', 
+            shell=True)
+        clean_pdb(pdb_h)
+        return pdb_h
+    else: 
+        clean_pdb(pdb_file)
+        return pdb_file
+

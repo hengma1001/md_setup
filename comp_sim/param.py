@@ -2,11 +2,9 @@ import os
 import subprocess
 # import tempfile 
 import MDAnalysis as mda 
-from biobb_chemistry.babelm.babel_add_hydrogens import BabelAddHydrogens
-from biobb_chemistry.babelm.babel_minimize import BabelMinimize
-from biobb_chemistry.acpype.acpype_params_gmx import AcpypeParamsGMX
 
-from .utils import missing_hydrogen, remove_hydrogen, run_at_temp, to_pdb
+from .utils import add_hydrogen 
+from .utils import run_at_temp, to_pdb
 
 # input_structure = './IBP.pdb' 
 # pH = 7
@@ -18,7 +16,7 @@ def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True):
     Copied from InspireMD
     This function is pretty much a wrapper for antechamber & tleap. 
     """   
-
+    pdb_lig = add_hydrogen(pdb_lig)
     subprocess.check_output(f'antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y', shell=True)
     subprocess.check_output(f'parmchk2 -i lig.mol2 -f mol2 -o lig.frcmod', shell=True)
     with open(f'leap.in', 'w+') as leap:
@@ -79,7 +77,7 @@ def ParameterizeAMBER_lig(pdb_lig, add_sol=True):
     Copied from InspireMD
     This function is pretty much a wrapper for antechamber & tleap. 
     """   
-
+    pdb_lig = add_hydrogen(pdb_lig)
     subprocess.check_output(f'antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y', shell=True)
     subprocess.check_output(f'parmchk2 -i lig.mol2 -f mol2 -o lig.frcmod', shell=True)
     with open(f'leap.in', 'w+') as leap:
