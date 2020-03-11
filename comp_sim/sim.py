@@ -4,6 +4,7 @@ import parmed as pmd
 import simtk.openmm.app as app
 import simtk.openmm as omm
 import simtk.unit as u
+from utils import ContactMapReporter
 
 
 def simulate_explicit(
