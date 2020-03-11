@@ -7,7 +7,7 @@ import simtk.unit as u
 
 
 def simulate_explicit(
-        pdb_file, top_file, check_point, GPU_index=0, 
+        pdb_file, top_file, check_point=None, GPU_index=0, 
         output_traj="output.dcd", output_log="output.log", output_cm=None,
         temperature=300., 
         # ion_strength=0., 
