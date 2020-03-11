@@ -39,9 +39,9 @@ def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True):
     subprocess.check_output(f'tleap -f leap.in', shell=True)
     if os.path.exists('comp.prmtop') and os.path.exists('comp.inpcrd'): 
         to_pdb('comp.inpcrd', 'comp.prmtop', 'comp.pdb')
-        return {'top': os.path.abspath('comp.prmtop'), 
-                'pos': os.path.abspath('comp.inpcrd'), 
-                'pdb': os.path.abspath('comp.pdb')}
+        return {'top_file': os.path.abspath('comp.prmtop'), 
+                'inpcrd_file': os.path.abspath('comp.inpcrd'), 
+                'pdb_file': os.path.abspath('comp.pdb')}
     else: 
         raise Exception("Leap failed to build topology, check errors...")
 
@@ -65,9 +65,9 @@ def ParameterizeAMBER_prot(pdb_pro, add_sol=True):
     subprocess.check_output(f'tleap -f leap.in', shell=True)
     if os.path.exists('prot.prmtop') and os.path.exists('prot.inpcrd'): 
         to_pdb('prot.inpcrd', 'prot.prmtop', 'prot.pdb')
-        return {'top': os.path.abspath('prot.prmtop'), 
-                'pos': os.path.abspath('prot.inpcrd'), 
-                'pdb': os.path.abspath('prot.pdb')}
+        return {'top_file': os.path.abspath('prot.prmtop'), 
+                'inpcrd_file': os.path.abspath('prot.inpcrd'), 
+                'pdb_file': os.path.abspath('prot.pdb')}
     else: 
         raise Exception("Leap failed to build topology, check errors...")
 
@@ -96,8 +96,8 @@ def ParameterizeAMBER_lig(pdb_lig, add_sol=True):
     subprocess.check_output(f'tleap -f leap.in', shell=True)
     if os.path.exists('lig.prmtop') and os.path.exists('lig.inpcrd'): 
         to_pdb('lig.inpcrd', 'lig.prmtop', 'lig.pdb')
-        return {'top': os.path.abspath('lig.prmtop'), 
-                'pos': os.path.abspath('lig.inpcrd'), 
-                'pdb': os.path.abspath('lig.pdb')}
+        return {'top_file': os.path.abspath('lig.prmtop'), 
+                'inpcrd_file': os.path.abspath('lig.inpcrd'), 
+                'pdb_file': os.path.abspath('lig.pdb')}
     else: 
         raise Exception("Leap failed to build topology, check errors...")
