@@ -4,6 +4,7 @@ import tempfile
 import subprocess
 import numpy as np 
 import MDAnalysis as mda 
+import parmed as pmd 
 
 import simtk.openmm.app as app
 import simtk.openmm as omm
@@ -72,9 +73,9 @@ def clean_pdb(pdb_file):
         pdb.write(''.join(pdb_atoms))
 
 
-def to_pdb(file_pos, file_top, file_pdb): 
-    trj = mda.Universe(file_top, file_pos) 
-    trj.atoms.write(file_pdb)
+def to_pdb(pos_file, top_file, pdb_file): 
+    top = pmd.load_file(top_file, xyz=pos_file) 
+    top.write_pdb(pdb_file)
 
 
 def add_hydrogen(pdb_file): 

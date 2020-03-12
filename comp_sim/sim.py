@@ -4,7 +4,7 @@ import parmed as pmd
 import simtk.openmm.app as app
 import simtk.openmm as omm
 import simtk.unit as u
-from utils import ContactMapReporter
+from .utils import ContactMapReporter
 
 
 def simulate_explicit(
@@ -86,3 +86,4 @@ def simulate_explicit(
     sim_time = sim_time * u.nanoseconds
     nsteps = int(sim_time/dt)
     simulation.step(nsteps)
+    

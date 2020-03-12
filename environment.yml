@@ -1,16 +1,17 @@
 name: MD_ff
 channels:
   - omnia
-  - bioconda
   - conda-forge
   - defaults
 dependencies:
+  - python=3.6
+  - pip 
+  - h5py
+  - numpy
+  - openmm 
+  - babel
+  - matplotlib 
   - ambertools 
   - mdanalysis
-  - openmm 
-  - numpy 
-  - matplotlib 
-  - pip:
-    - parmed==2.7.4
-prefix: /Users/hm/anaconda2/envs/MD_ff
-
+  - conda 
+prefix: /Users/hm/anaconda2/envs/MD_ff/
