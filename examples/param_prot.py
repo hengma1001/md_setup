@@ -8,6 +8,6 @@ from comp_sim.utils import to_pdb
 pdb = os.path.abspath('./lig.pdb')
 pro_pdb = os.path.abspath('./apo.pdb') 
 params = ParameterizeAMBER_prot(
-    pro_pdb)
+    pro_pdb, add_sol=False)
 
 

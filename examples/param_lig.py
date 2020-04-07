@@ -6,6 +6,6 @@ from comp_sim.param import ParameterizeAMBER_lig
 
 pdb = os.path.abspath('./lig1.pdb')
 params = ParameterizeAMBER_lig(
-    pdb)
+    pdb, add_sol=False)
 print(params) 
 

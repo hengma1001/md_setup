@@ -11,6 +11,7 @@ pro_pdb = os.path.abspath('./apo.pdb')
 params = ParameterizeAMBER_comp(
         pdb, pro_pdb)
 
+exit()
 
 simulate_explicit(
         params['pdb_file'], 
