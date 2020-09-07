@@ -5,11 +5,11 @@ import MDAnalysis as mda
 
 from .utils import add_hydrogen, remove_hydrogen 
 from .utils import get_ligand, get_protein
-from .utils import run_at_temp, to_pdb
+from .utils import run_at_temp, to_pdb, clean_pdb
 
 
 @run_at_temp
-def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True):
+def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True, lig_charge=0):
     """
     Copied from InspireMD
     This function is pretty much a wrapper for antechamber & tleap. 
@@ -21,8 +21,20 @@ def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True):
     output_pdb = os.path.join(output_path, 'comp.pdb')
 
     remove_hydrogen(pdb_pro, pdb_pro)
-    pdb_lig = add_hydrogen(pdb_lig)
-    subprocess.check_output(f'antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y', shell=True)
+    # pdb_lig = trim_pdb(pdb_lig) 
+    clean_pdb(pdb_lig) 
+    try:
+        # print("Using original hydrogens...") 
+        subprocess.check_output(f'antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y -nc {lig_charge}', shell=True)
+    except: 
+        try: 
+            print("incresing SCF tolerance...")
+            antechamber_command = f"""antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y -nc {lig_charge} -ek "qm_theory='AM1', grms_tol=0.0005, scfconv=1.d-9, ndiis_attempts=1000" """
+            subprocess.check_output(antechamber_command, shell=True)
+        except: 
+            print('readding hydrogen to the system...') 
+            pdb_lig_h = add_hydrogen(pdb_lig)
+            subprocess.check_output(f'antechamber -i {pdb_lig_h} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y -nc {lig_charge}', shell=True)
     subprocess.check_output(f'parmchk2 -i lig.mol2 -f mol2 -o lig.frcmod', shell=True)
     with open(f'leap.in', 'w+') as leap:
         leap.write("source leaprc.protein.ff14SBonlysc\n")
@@ -54,7 +66,7 @@ def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True):
 
 
 # @run_at_temp
-def ParameterizeAMBER_comp2(pdb_comp, add_sol=True): 
+def ParameterizeAMBER_comp2(pdb_comp, add_sol=True, lig_charge=0): 
     """
     This function is to build complex system with multiple chains and 
     ligands 
@@ -63,7 +75,7 @@ def ParameterizeAMBER_comp2(pdb_comp, add_sol=True):
     pdb_pro = get_protein(pdb_comp)
     # ligand operations 
     pdb_lig = get_ligand(pdb_comp)
-    params = ParameterizeAMBER_comp(pdb_lig, pdb_pro)
+    params = ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True, lig_charge=lig_charge)
     return params
 
 

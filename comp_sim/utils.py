@@ -38,6 +38,17 @@ from MDAnalysis.analysis import align
 #     return prot_list, lig_list
 
 
+# def trim_pdb(pdb_file): 
+#     pdb_trimmed = os.path.abspath('./lig_trimmed.pdb') 
+#     pdb = open(pdb_file, 'r') 
+#     pdb_tr = open(pdb_trimmed, 'w') 
+#     for line in pdb: 
+#         if line.startswith('ATOM') or line.startswith('HETATM'): 
+#             pdb_tr.write(line) 
+#     pdb.close() 
+#     pdb_tr.close()
+#     return pdb_trimmed
+
 def get_ligand(pdb_file): 
     mda_trj = mda.Universe(pdb_file)
     lig = mda_trj.select_atoms('not protein') 
@@ -71,8 +82,9 @@ def run_at_temp(func):
         current_dir = os.getcwd()
         temp_path = tempfile.TemporaryDirectory() 
         os.chdir(temp_path.name) 
-        func(*args, **kwargs)
+        output = func(*args, **kwargs)
         os.chdir(current_dir) 
+        return output
     return wrapper
 
 
@@ -134,11 +146,14 @@ def add_hydrogen(pdb_file):
     obabel -ipdb adp.pdb -h -opdb >  adph.pdb
     """
     if not missing_hydrogen(pdb_file): 
-        remove_hydrogen(pdb_file, pdb_file)
+        pdb_noH = pdb_file[:-4] + '_noh.pdb'
+        remove_hydrogen(pdb_file, pdb_noH)
+    else: 
+        pdb_noH = pdb_file
 
     pdb_h = pdb_file[:-4] + '_h.pdb'
     subprocess.check_output(
-        f'obabel -ipdb {pdb_file} -h -opdb >  {pdb_h}',
+        f'obabel -ipdb {pdb_noH} -h -opdb >  {pdb_h}',
         shell=True)
     clean_pdb(pdb_h)
     return pdb_h
