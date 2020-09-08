@@ -35,3 +35,15 @@ This is the most tricky part as we are missing some of them on Summit.
 Most of these should trivial except for ambertools and openbabel. I have never tried to install them on Summit, nor there is compiled version from conda. It was normally run on my laptop or other Linux machines.  
 So the python is 3.6 and most dependencies should be available here. (/ccs/home/hm0/.conda/envs/py3) Since both ambertools and openbabel can be installed independent of conda environment, `py` env can be loaded for all the python dependencies. 
 The `environment.yml` can be a good reference if the list is missing any package. 
+
+### Installations 
+1. ambertools 
+    PowerPC version of ambertools was available from the `bioconda` channel. 
+    ```
+        conda install -c bioconda ambertools
+    ```
+2. openbabel 
+    OpenBabel was compiled from source with `cmake`. 
+    ```
+        cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/.conda/envs/py3/ -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc
+    ```
