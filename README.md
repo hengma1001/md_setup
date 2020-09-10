@@ -11,7 +11,16 @@ The code assumes the input files are seperated into protein file and ligands pos
 ### Running the code 
 The coda is simply running 
 ```
-python parameterize.py
+source activate entk_py3
+export RADICAL_PILOT_DBURL=mongodb://hyperrct:v9gpU8gU5Wxz2C88@129.114.17.185:27017/hyperrct
+export RMQ_HOSTNAME=129.114.17.185
+export RMQ_PORT=5672
+export RMQ_USERID=hyperrct
+export RMQ_PASSWD=h1p3rrc7
+export RADICAL_PROFILE=True
+export RADICAL_PILOT_PROFILE=True
+export RADICAL_ENTK_PROFILE=True
+python summit_param.py
 ```
 after all the input path is specified in the script. 
 
