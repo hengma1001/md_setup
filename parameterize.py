@@ -2,6 +2,7 @@ import os
 import re
 import glob 
 # import json 
+import argparse 
 import shutil
 from tqdm import tqdm
 import MDAnalysis as mda 
@@ -10,37 +11,42 @@ from comp_sim.utils import only_protein, align_to_template, clean_pdb
 from comp_sim.param import ParameterizeAMBER_comp 
 from comp_sim.param import ParameterizeAMBER_prot 
 
+parser = argparse.ArgumentParser() 
+parser.add_argument("-p", "--prot", 
+        help="Input: protein pdb file"
+        )
+parser.add_argument("-l", "--lig", 
+        default=None, 
+        help="Input: ligand pdb file"
+        ) 
+
+args = parser.parse_args() 
 host_dir = os.getcwd() 
 # specify your input ligand pdbs 
-pdb_files = sorted(glob.glob('./pdbs/input_*.pdb'))
-# print(pdb_files)
-
+pdb_file = args.lig
 # specify your protein pdb 
-prot_file = os.path.abspath('./pdbs/prot.pdb')
+prot_file = args.prot
 # print(prot_file) 
 
-# getting parameter for protein 
-label = 'protein' 
-pdb = prot_file
-work_dir = os.path.abspath(os.path.join(host_dir, 'input_' + label))
-os.makedirs(work_dir, exist_ok=True)
-pdb_copy = os.path.join(work_dir, os.path.basename(pdb))
-shutil.copy2(pdb, pdb_copy)
-clean_pdb(pdb_copy)
-os.chdir(work_dir) 
-info = ParameterizeAMBER_prot(pdb_copy)
-os.chdir(host_dir)
-
-# getting parameter for protein-ligand complexes 
-info_list = []
-for pdb in tqdm(pdb_files): 
+if pdb_file == None: 
+    # getting parameter for protein 
+    label = 'protein' 
+    pdb = prot_file
+    work_dir = os.path.abspath(os.path.join(host_dir, 'input_' + label))
+    os.makedirs(work_dir, exist_ok=True)
+    pdb_copy = os.path.join(work_dir, os.path.basename(pdb))
+    shutil.copy2(pdb, pdb_copy)
+    clean_pdb(pdb_copy)
+    os.chdir(work_dir) 
+    info = ParameterizeAMBER_prot(pdb_copy)
+    os.chdir(host_dir)
+else: 
     # label for ligand identity 
+    pdb = pdb_file
     pdb_code = os.path.basename(pdb).split('_')[-1][:-4] 
 
     work_dir = os.path.abspath(os.path.join(host_dir, 'input_' + pdb_code))
     os.makedirs(work_dir, exist_ok=True) 
-    if glob.glob(work_dir + '/*prmtop') != []: 
-        continue
     pdb_copy = os.path.join(work_dir, os.path.basename(pdb))
     prot_copy = os.path.join(work_dir, os.path.basename(prot_file)) 
     shutil.copy2(pdb, pdb_copy)
@@ -58,11 +64,5 @@ for pdb in tqdm(pdb_files):
         except: 
             print(f">>>>>>>>>{pdb_code} being parameterizaed with +1 e charge...")
             info = ParameterizeAMBER_comp(pdb_copy, prot_copy, lig_charge=+1, add_sol=True)
-
-
-    info_list.append(info)
     os.chdir(host_dir) 
 
-# input_filepath = os.path.abspath('./input_conf.json') 
-# with open(input_filepath, 'w') as input_file: 
-#     json.dump(info_list, input_file)
