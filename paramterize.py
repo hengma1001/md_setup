@@ -7,17 +7,17 @@ from tqdm import tqdm
 import MDAnalysis as mda 
 import pandas as pd 
 
-from comp_sim.utils import only_protein, align_to_template, clean_pdb
+from comp_sim.utils import is_protein, align_to_template, clean_pdb
 from comp_sim.param import ParameterizeAMBER_comp 
 from comp_sim.param import ParameterizeAMBER_prot 
 
 host_dir = os.getcwd() 
 # specify your input ligand pdbs 
-pdb_files = sorted(glob.glob('../../pdbs/*oeb*.pdb') )
+pdb_files = sorted(glob.glob('../lig_pdb_h/lig_*.pdb'))
 # print(pdb_files)
 
 # specify your protein pdb 
-prot_file = os.path.abspath('../../pdbs/MPro_NAN_A_1_H.receptor_001.pdb')
+prot_file = os.path.abspath('../pdbs/prot.pdb')
 # print(prot_file) 
 
 # getting parameter for protein 
@@ -46,8 +46,8 @@ for pdb in tqdm(pdb_files):
     prot_copy = os.path.join(work_dir, os.path.basename(prot_file)) 
     shutil.copy2(pdb, pdb_copy)
     shutil.copy2(prot_file, prot_copy) 
-    clean_pdb(prot_copy) 
-    clean_pdb(pdb_copy) 
+    # clean_pdb(prot_copy) 
+    # clean_pdb(pdb_copy) 
     os.chdir(work_dir) 
     try: 
         print(f">>>>>>>>>{pdb_code} being parameterizaed with 0 e charge...")

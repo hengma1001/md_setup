@@ -5,10 +5,10 @@ import MDAnalysis as mda
 
 from .utils import add_hydrogen, remove_hydrogen 
 from .utils import get_ligand, get_protein
-from .utils import run_at_temp, to_pdb, clean_pdb
+from .utils import run_at_temp, to_pdb, clean_pdb, is_protein
 
 
-@run_at_temp
+# @run_at_temp
 def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True, lig_charge=0):
     """
     Copied from InspireMD
@@ -22,20 +22,20 @@ def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True, lig_charge=0):
 
     remove_hydrogen(pdb_pro, pdb_pro)
     # pdb_lig = trim_pdb(pdb_lig) 
-    clean_pdb(pdb_lig) 
-    try:
-        # print("Using original hydrogens...") 
-        subprocess.check_output(f'antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y -nc {lig_charge}', shell=True)
-    except: 
-        try: 
+    if is_protein(pdb_lig): 
+        remove_hydrogen(pdb_lig, pdb_lig)
+    else: 
+        # clean_pdb(pdb_lig) 
+        try:
+            # pdb_lig = add_hydrogen(pdb_lig) 
+            # print("Using original hydrogens...") 
+            subprocess.check_output(f'antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y -nc {lig_charge}', shell=True)
+        except: 
             print("incresing SCF tolerance...")
             antechamber_command = f"""antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y -nc {lig_charge} -ek "qm_theory='AM1', grms_tol=0.0005, scfconv=1.d-9, ndiis_attempts=1000" """
             subprocess.check_output(antechamber_command, shell=True)
-        except: 
-            print('readding hydrogen to the system...') 
-            pdb_lig_h = add_hydrogen(pdb_lig)
-            subprocess.check_output(f'antechamber -i {pdb_lig_h} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y -nc {lig_charge}', shell=True)
-    subprocess.check_output(f'parmchk2 -i lig.mol2 -f mol2 -o lig.frcmod', shell=True)
+        subprocess.check_output(f'parmchk2 -i lig.mol2 -f mol2 -o lig.frcmod', shell=True)
+    # prepare leap input file 
     with open(f'leap.in', 'w+') as leap:
         leap.write("source leaprc.protein.ff14SBonlysc\n")
         leap.write("source leaprc.gaff\n")
@@ -43,8 +43,11 @@ def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True, lig_charge=0):
         leap.write("set default PBRadii mbondi3\n")
         leap.write(f"rec = loadPDB {pdb_pro} # May need full filepath?\n")
         # leap.write("saveAmberParm rec apo.prmtop apo.inpcrd\n")
-        leap.write("lig = loadmol2 lig.mol2\n")
-        leap.write("loadAmberParams lig.frcmod\n")
+        if is_protein(pdb_lig): 
+            leap.write(f"lig = loadPDB {pdb_lig}\n") 
+        else: 
+            leap.write("lig = loadmol2 lig.mol2\n")
+            leap.write("loadAmberParams lig.frcmod\n")
         # leap.write("saveAmberParm lig lig.prmtop lig.inpcrd\n")
         leap.write("comp = combine {rec lig}\n")
         if add_sol: 
@@ -79,7 +82,7 @@ def ParameterizeAMBER_comp2(pdb_comp, add_sol=True, lig_charge=0):
     return params
 
 
-@run_at_temp
+# @run_at_temp
 def ParameterizeAMBER_prot(pdb_pro, add_sol=True):
     """
     This functions is to parameterize a single protein
@@ -112,7 +115,7 @@ def ParameterizeAMBER_prot(pdb_pro, add_sol=True):
         raise Exception("Leap failed to build topology, check errors...")
 
 
-@run_at_temp
+# @run_at_temp
 def ParameterizeAMBER_lig(pdb_lig, add_sol=True):
     """
     Copied from InspireMD

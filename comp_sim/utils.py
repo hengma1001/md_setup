@@ -65,7 +65,7 @@ def get_protein(pdb_file):
     return pdb_lig
 
 
-def only_protein(pdb_file): 
+def is_protein(pdb_file): 
     mda_trj = mda.Universe(pdb_file)
     not_prot = mda_trj.select_atoms('not protein') 
     if not_prot.n_atoms == 0: 
