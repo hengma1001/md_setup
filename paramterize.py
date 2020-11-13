@@ -17,20 +17,20 @@ pdb_files = sorted(glob.glob('../lig_pdb_h/lig_*.pdb'))
 # print(pdb_files)
 
 # specify your protein pdb 
-prot_file = os.path.abspath('../pdbs/prot.pdb')
+prot_file = os.path.abspath('../pdbs/3CLPro_7BQY_A_1_F_01.pdb')
 # print(prot_file) 
 
 # getting parameter for protein 
-label = 'protein' 
-pdb = prot_file
-work_dir = os.path.abspath(os.path.join(host_dir, 'input_' + label))
-os.makedirs(work_dir, exist_ok=True)
-pdb_copy = os.path.join(work_dir, os.path.basename(pdb))
-shutil.copy2(pdb, pdb_copy)
-clean_pdb(pdb_copy)
-os.chdir(work_dir) 
-info = ParameterizeAMBER_prot(pdb_copy)
-os.chdir(host_dir)
+# label = 'protein' 
+# pdb = prot_file
+# work_dir = os.path.abspath(os.path.join(host_dir, 'input_' + label))
+# os.makedirs(work_dir, exist_ok=True)
+# pdb_copy = os.path.join(work_dir, os.path.basename(pdb))
+# shutil.copy2(pdb, pdb_copy)
+# clean_pdb(pdb_copy)
+# os.chdir(work_dir) 
+# info = ParameterizeAMBER_prot(pdb_copy)
+# os.chdir(host_dir)
 
 # getting parameter for protein-ligand complexes 
 info_list = []
