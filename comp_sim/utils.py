@@ -146,8 +146,7 @@ def add_hydrogen(pdb_file):
     obabel -ipdb adp.pdb -h -opdb >  adph.pdb
     """
     if not missing_hydrogen(pdb_file): 
-        pdb_noH = pdb_file[:-4] + '_noh.pdb'
-        remove_hydrogen(pdb_file, pdb_noH)
+        return pdb_file
     else: 
         pdb_noH = pdb_file
 

@@ -8,7 +8,7 @@ from .utils import get_ligand, get_protein
 from .utils import run_at_temp, to_pdb, clean_pdb, is_protein
 
 
-# @run_at_temp
+@run_at_temp
 def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True, lig_charge=0):
     """
     Copied from InspireMD
@@ -68,7 +68,7 @@ def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True, lig_charge=0):
         raise Exception("Leap failed to build topology, check errors...")
 
 
-# @run_at_temp
+@run_at_temp
 def ParameterizeAMBER_comp2(pdb_comp, add_sol=True, lig_charge=0): 
     """
     This function is to build complex system with multiple chains and 
@@ -82,7 +82,7 @@ def ParameterizeAMBER_comp2(pdb_comp, add_sol=True, lig_charge=0):
     return params
 
 
-# @run_at_temp
+@run_at_temp
 def ParameterizeAMBER_prot(pdb_pro, add_sol=True):
     """
     This functions is to parameterize a single protein
@@ -115,8 +115,8 @@ def ParameterizeAMBER_prot(pdb_pro, add_sol=True):
         raise Exception("Leap failed to build topology, check errors...")
 
 
-# @run_at_temp
-def ParameterizeAMBER_lig(pdb_lig, add_sol=True):
+@run_at_temp
+def ParameterizeAMBER_lig(pdb_lig, lig_charge=0, add_sol=True):
     """
     Copied from InspireMD
     This function is pretty much a wrapper for antechamber & tleap. 
@@ -126,8 +126,8 @@ def ParameterizeAMBER_lig(pdb_lig, add_sol=True):
     output_inpcrd = os.path.join(output_path, 'lig.inpcrd')
     output_pdb = os.path.join(output_path, 'lig.pdb')
 
-    pdb_lig = add_hydrogen(pdb_lig)
-    subprocess.check_output(f'antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y', shell=True)
+    # pdb_lig = add_hydrogen(pdb_lig)
+    subprocess.check_output(f'antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y  -nc {lig_charge}', shell=True)
     subprocess.check_output(f'parmchk2 -i lig.mol2 -f mol2 -o lig.frcmod', shell=True)
     with open(f'leap.in', 'w+') as leap:
         leap.write("source leaprc.protein.ff14SBonlysc\n")
