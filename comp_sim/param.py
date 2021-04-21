@@ -37,7 +37,7 @@ def ParameterizeAMBER_comp(pdb_lig, pdb_pro, add_sol=True, lig_charge=0):
         subprocess.check_output(f'parmchk2 -i lig.mol2 -f mol2 -o lig.frcmod', shell=True)
     # prepare leap input file 
     with open(f'leap.in', 'w+') as leap:
-        leap.write("source leaprc.protein.ff14SBonlysc\n")
+        leap.write("source leaprc.protein.ff14SB\n")
         leap.write("source leaprc.gaff\n")
         leap.write("source leaprc.water.tip3p\n")
         leap.write("set default PBRadii mbondi3\n")
@@ -92,7 +92,7 @@ def ParameterizeAMBER_prot(pdb_pro, add_sol=True):
     output_inpcrd = os.path.join(output_path, 'prot.inpcrd')
     output_pdb = os.path.join(output_path, 'prot.pdb')
     with open('leap.in', 'w') as leap: 
-        leap.write("source leaprc.protein.ff14SBonlysc\n")
+        leap.write("source leaprc.protein.ff14SB\n")
         leap.write("source leaprc.gaff\n")
         leap.write("source leaprc.water.tip3p\n")
         leap.write("set default PBRadii mbondi3\n")
@@ -130,7 +130,7 @@ def ParameterizeAMBER_lig(pdb_lig, lig_charge=0, add_sol=True):
     subprocess.check_output(f'antechamber -i {pdb_lig} -fi pdb -o lig.mol2 -fo mol2 -c bcc -pf y -an y  -nc {lig_charge}', shell=True)
     subprocess.check_output(f'parmchk2 -i lig.mol2 -f mol2 -o lig.frcmod', shell=True)
     with open(f'leap.in', 'w+') as leap:
-        leap.write("source leaprc.protein.ff14SBonlysc\n")
+        leap.write("source leaprc.protein.ff14SB\n")
         leap.write("source leaprc.gaff\n")
         leap.write("source leaprc.water.tip3p\n")
         leap.write("set default PBRadii mbondi3\n")
