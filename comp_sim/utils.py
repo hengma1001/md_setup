@@ -14,40 +14,125 @@ from MDAnalysis.analysis import distances
 from MDAnalysis.analysis import align
 
 
-# def pdb_split(pdb_file): 
-#     """
-#     This function is to split a complex pdb into a list of pdbs for each 
-#     components (chains and ligands) 
-#     """
-#     mda_trj = mda.Universe(pdb_file) 
-#     pdb_name = os.path.basename(pdb_file).replace('.pdb', '')
-#     pdb_dir = os.path.dirname(pdb_file)
-
-#     # get all protein chains 
-#     prot_list = []
-#     protein = mda_trj.select_atoms('protein')
-#     for seg in protein.segments: 
-#         seg_pdb_file = os.path.join(pdb_dir, f"{pdb_name}_{seg.segid}.pdb") 
-#         seg.atoms.write(seg_pdb_file) 
-#         prot_list.append(seg_pdb_file) 
-
-#     lig_list = [] 
-#     mda_ligs = mda_trj.select_atoms('not protein') 
-#     for i, frag in enumerate(mda_ligs.fragments): 
-#         frag_pdb_file = os.path.join(pdb_dir, f"{pdb_name}_{frag.id}.pdb")
-#     return prot_list, lig_list
+ff_libs = [
+          '/home/hm/miniconda3/envs/MD_ff/dat/leap/lib/aminoct12.lib', 
+          '/home/hm/miniconda3/envs/MD_ff/dat/leap/lib/aminont12.lib',
+          '/home/hm/miniconda3/envs/MD_ff/dat/leap/lib/amino12.lib'
+          ]
 
 
-# def trim_pdb(pdb_file): 
-#     pdb_trimmed = os.path.abspath('./lig_trimmed.pdb') 
-#     pdb = open(pdb_file, 'r') 
-#     pdb_tr = open(pdb_trimmed, 'w') 
-#     for line in pdb: 
-#         if line.startswith('ATOM') or line.startswith('HETATM'): 
-#             pdb_tr.write(line) 
-#     pdb.close() 
-#     pdb_tr.close()
-#     return pdb_trimmed
+def trim_line(line): 
+    return line.split()[0].replace('"', '')
+
+
+def find_diff(a, b): 
+    """find elements that are in A, but not in B
+    """
+    return sorted([i for i in a if i not in b])
+
+
+def get_mismatch(a, b): 
+    return find_diff(a, b), find_diff(b, a)
+
+
+def atomList_almostEqual(a, b): 
+    if len(a) == len(b): 
+        a, b = get_atomname(a), get_atomname(b)
+        # b = sorted([i[:-1] if len(i) > 1 else i for i in b])
+        x = [i != j for i, j in zip(a, b)]
+        if sum(x) == 0: 
+            return True
+    return False 
+
+
+def get_atomname(a): 
+    """remove the last label in atomnames"""
+    return sorted([i[:-1] if len(i) > 1 else i for i in a])
+
+
+def parse_amberlib(amber_libfile): 
+    res_types = {}
+    with open(amber_libfile, 'r') as fp: 
+        f_read = fp.readlines() 
+        line_type = None
+        for line in f_read: 
+            if line.startswith('!!index'): 
+                line_type = 'index'
+                continue 
+            elif line.startswith('!entry'): 
+                local_type = trim_line(line)
+                if local_type.endswith('atoms'): 
+                    line_type = local_type.split('.')[1]
+                    continue 
+                else: 
+                    line_type = None
+
+            if line_type == 'index': 
+                resname = trim_line(line)
+                res_types[resname] = [] 
+            elif line_type in res_types.keys(): 
+                res_types[line_type].append(trim_line(line))
+    #             print(trim_line(line), line_type)
+    return res_types 
+
+
+def match_pdb_to_amberff(pdb_file): 
+    """
+    to match atom names from a pdb file to Amber forcefield
+    """
+    # get atom names of each residue from amber lib files
+    res_types = {}
+    for lib in ff_libs: 
+        res_types.update(parse_amberlib(lib))
+
+    # residues with diff protonation states 
+    proton_res = {
+            'CYS': ['CYS', 'CYM', 'CYX'], 
+            'HIS': ['HID', 'HIE', 'HIP']
+            }
+
+    mda_traj = mda.Universe(pdb_file)
+    for res in mda_traj.residues:
+        # get correct resname for termini 
+        resname = res.resname
+        if res.resindex ==0: 
+            resname = 'N' + resname
+        elif res.resindex == mda_traj.residues.n_residues - 1: 
+            resname = 'C' + resname 
+        
+        # get correct resname for CYS and HIS 
+        atm_names = res.atoms.names
+        if resname in proton_res.keys():
+            for resn in proton_res[resname]: 
+                target_names = res_types[resn]
+                mismatch = get_mismatch(atm_names, target_names)
+                if atomList_almostEqual(*mismatch): 
+                    resname = resn 
+                    res.resname = resn
+                    break 
+            # print(res.resindex, res.resname,  
+            #     resname, get_mismatch(atm_names, target_names))
+        # get force field atom names             
+        target_names = res_types[resname]
+        
+        # get mismatching lists of atom, atom name and 
+        # force field atom name 
+        local_mis, target_mis = get_mismatch(atm_names, target_names)
+        local_mis_atoms = [atom for name in local_mis 
+                           for atom in res.atoms if name == atom.name]
+        ind_serach = get_atomname(target_mis)
+
+        for atom in local_mis_atoms: 
+            if atom.name.startswith('HT'): 
+                target_name = atom.name.replace('HT', 'H')
+                atom.name = target_name
+            else: 
+                target_ind = ind_serach.index(atom.name[:-1])
+                target_name = target_mis[target_ind]
+                atom.name = target_name
+
+    mda_traj.atoms.write(pdb_file)
+    
 
 def get_ligand(pdb_file): 
     mda_trj = mda.Universe(pdb_file)
@@ -120,7 +205,8 @@ def missing_hydrogen(pdb_file):
         True if missing H, false otherwise 
     """
     trj = mda.Universe(pdb_file) 
-    missingH = not np.any(['H' in name for name in trj.atoms.names]) 
+    hydrogens = trj.select_atoms('name H*')
+    missingH =  True if hydrogens.n_atoms == 0 else False
     return missingH
 
 
