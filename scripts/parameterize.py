@@ -17,7 +17,7 @@ print(pdb_files)
 lig_charges = {'hl3': 0, 'mclue': +1}
 # getting parameter for protein-ligand complexes 
 info_list = []
-for pdb in tqdm(pdb_files[2:]): 
+for pdb in tqdm(pdb_files[:]): 
     # label for ligand identity 
     pdb_code = os.path.basename(pdb)[:-4] 
 
@@ -29,8 +29,6 @@ for pdb in tqdm(pdb_files[2:]):
 
     shutil.copy2(pdb, pdb_copy)
 
-    # clean_pdb(prot_copy) 
-    # clean_pdb(pdb_copy) 
     os.chdir(work_dir) 
     if pdb_code in lig_charges: 
         amberP = AMBER_param(pdb_copy, 
@@ -42,17 +40,5 @@ for pdb in tqdm(pdb_files[2:]):
     amberP.param_comp()
     os.chdir(host_dir) 
 
-    # try: 
-    #     print(f">>>>>>>>>{pdb_code} being parameterizaed with 0 e charge...")
-    #     info = ParameterizeAMBER_comp(pdb_copy, prot_copy, lig_charge=0, add_sol=True) 
-    # except: 
-    #     try:
-    #         print(f">>>>>>>>>{pdb_code} being parameterizaed with -1 e charge...")
-    #         info = ParameterizeAMBER_comp(pdb_copy, prot_copy, lig_charge=-1, add_sol=True) 
-    #     except: 
-    #         print(f">>>>>>>>>{pdb_code} being parameterizaed with +1 e charge...")
-    #         info = ParameterizeAMBER_comp(pdb_copy, prot_copy, lig_charge=+1, add_sol=True)
-
-
-    # info_list.append(info)
+    info_list.append(info)
 
