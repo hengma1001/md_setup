@@ -6,8 +6,8 @@ import numpy as np
 import MDAnalysis as mda
 import parmed as pmd
 
-import simtk.openmm.app as app
-import simtk.openmm as omm
+# import simtk.openmm.app as app
+# import simtk.openmm as omm
 import simtk.unit as u
 
 from MDAnalysis.analysis import distances
@@ -35,7 +35,12 @@ def find_diff(a, b):
     return sorted([i for i in a if i not in b])
 
 
-def run_and_save(tsk, log):
+def run_and_save(command, log):
+    tsk = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True)
     tsk.wait()
     line = tsk.stdout.readline()
     log.write(line)

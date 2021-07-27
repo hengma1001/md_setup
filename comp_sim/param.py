@@ -7,6 +7,7 @@ import MDAnalysis as mda
 from .utils import add_hydrogen, remove_hydrogen, missing_hydrogen
 from .utils import get_ligand, get_protein
 from .utils import match_pdb_to_charmmff, match_pdb_to_amberff
+from .utils import run_and_save
 from .utils import run_at_temp, is_protein
 
 
@@ -175,9 +176,9 @@ class GMX_param(object):
         self.keep_H = keep_H
         self.box_padding = box_padding
         log_file = os.path.dirname(pdb) + '/gmx.log'
-        self.log = open(log_file, 'w')
-        self.label = os.path.basename(pdb)[:-4]
-        self.pdb_preprocess()
+        self.log = open(log_file, 'wb')
+        self.build_sys()
+        self.log.close()
 
     def pdb_preprocess(self):
         """
@@ -196,16 +197,10 @@ class GMX_param(object):
         parameterize the ligand pdb with amber antechamber
         tools
         """
-        command = f'echo -ne "1\n1" | pdb2gmx -f {self.pdb} '\
+        self.top = self.pdb.replace('.pdb', '.top')
+        command = f'echo -n "1\n1" | pdb2gmx -f {self.pdb} '\
                 f'-o {self.pdb} -p {self.top}'
-        tsk = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                shell=True)
-        tsk.wait()
-        line = tsk.stdout.readline()
-        self.log.write(line)
+        run_and_save(command, self.log)
 
     def get_box_size(self):
         mda_traj = mda.Universe(self.pdb)
@@ -218,11 +213,46 @@ class GMX_param(object):
         """
         add solvent molecules
         """
-        self.param_ligs()
-        comp_info = self.write_tleapIN()
-        subprocess.check_output(f'tleap -f leap.in', shell=True)
-        if (os.path.exists(comp_info['top_file']) and
-            os.path.exists(comp_info['pdb_file'])):
-            return comp_info
-        else:
-            raise Exception("Leap failed to build topology, check errors...")
+        # define box size
+        box_size = self.get_box_size()
+        command = f'editconf -f {self.pdb} -c'\
+            f' -o {self.pdb} -bt cubic -box {box_size}'
+        run_and_save(command, self.log)
+
+        # add water molecules
+        command = f"genbox -cp {self.pdb}"\
+            f" -cs -p {self.top} -o {self.pdb}"
+        run_and_save(command, self.log)
+
+        # add ions
+        self.tpr = self.pdb.replace('.pdb', '.tpr')
+        command = f"grompp -f ions.mdp -c {self.pdb}"\
+            f" -p {self.top} -o {self.tpr}"
+        run_and_save(command, self.log)
+
+        command = f"echo SOL | genion -s {self.tpr}"\
+            f" -o {self.pdb} -p {self.top}"\
+            f" -conc 0.15 -neutral"
+        run_and_save(command, self.log)
+
+        # verification
+        command = f"grompp -f ions.mdp"\
+            f" -c {self.pdb} -p {self.top}p"\
+            f" -o {self.tpr}"
+        tsk = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True)
+
+        os.system("rm \\#*")
+
+    def build_sys(self):
+        print("preprocessing pdb file...")
+        self.pdb_preprocess()
+        print('building topology file...')
+        self.top_build()
+        print('adding solvent...')
+        self.add_sol()
+
+

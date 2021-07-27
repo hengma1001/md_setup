@@ -15,8 +15,9 @@ host_dir = os.getcwd()
 pdb_files = sorted(
     glob.glob('/home/hm/VM_shared/mpro/pose_san/pdbs/pdb_charmm/*po.pdb'))
 print(pdb_files)
+ff_dir = '/home/hm/VM_shared/mpro/pose_san/inputs/'\
+        'inputs_charmm/charmm36-feb2021.ff'
 
-lig_charges = {'hl3': 0, 'mclue': +1}
 # getting parameter for protein-ligand complexes
 info_list = []
 for pdb in tqdm(pdb_files[:]):
@@ -28,15 +29,18 @@ for pdb in tqdm(pdb_files[:]):
     # if glob.glob(work_dir + '/*prmtop') != []:
     #     continue
     pdb_copy = os.path.join(work_dir, os.path.basename(pdb))
+    ff_copy = os.path.join(work_dir, os.path.basename(ff_dir))
 
     shutil.copy2(pdb, pdb_copy)
-
+    print(ff_dir, ff_copy)
+    shutil.copytree(ff_dir, ff_copy)
     os.chdir(work_dir)
 
     charmmP = GMX_param(pdb_copy, keep_H=True)
-    print(charmmP.get_box_size())
+    # print(charmmP.get_box_size())
     # print(charmmP.prot_files, charmmP.lig_files)
-    # charmmP.param_comp()
+    # charmmP.build_sys()
     os.chdir(host_dir)
+
 
     # info_list.append(info)
