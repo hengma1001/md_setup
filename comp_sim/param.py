@@ -167,13 +167,15 @@ class GMX_param(object):
             add_sol=True,
             lig_charge=0,
             keep_H=False,
+            box_size=0, 
             box_padding=1.,
-            ion_conc=0):
+            ion_conc=0.15):
 
         self.pdb = pdb
         self.add_sol = add_sol
         self.lig_charge = lig_charge
         self.keep_H = keep_H
+        self.box_size = box_size
         self.box_padding = box_padding
         log_file = os.path.dirname(pdb) + '/gmx.log'
         self.log = open(log_file, 'wb')
@@ -209,12 +211,15 @@ class GMX_param(object):
         box_size = np.abs(pos_max - pos_min)
         return max(box_size) / 10 + self.box_padding * 2
 
-    def add_sol(self):
+    def build_sol(self):
         """
         add solvent molecules
         """
         # define box size
-        box_size = self.get_box_size()
+        if self.box_size: 
+            box_size = self.box_size / 10
+        else: 
+            box_size = self.get_box_size()
         command = f'editconf -f {self.pdb} -c'\
             f' -o {self.pdb} -bt cubic -box {box_size}'
         run_and_save(command, self.log)
@@ -253,6 +258,6 @@ class GMX_param(object):
         print('building topology file...')
         self.top_build()
         print('adding solvent...')
-        self.add_sol()
+        self.build_sol()
 
 

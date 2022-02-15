@@ -13,10 +13,9 @@ from comp_sim.param import GMX_param
 host_dir = os.getcwd()
 # specify your input ligand pdbs
 pdb_files = sorted(
-    glob.glob('/home/hm/VM_shared/mpro/pose_san/pdbs/pdb_charmm/*po.pdb'))
+    glob.glob('/lambda_stor/homes/heng.ma/Research/Fab/md_setup/pdbs/*1379.pdb'))
 print(pdb_files)
-ff_dir = '/home/hm/VM_shared/mpro/pose_san/inputs/'\
-        'inputs_charmm/charmm36-feb2021.ff'
+ff_dir = '/homes/heng.ma/Research/force_field/charmm36-feb2021.ff'
 
 # getting parameter for protein-ligand complexes
 info_list = []
@@ -36,7 +35,7 @@ for pdb in tqdm(pdb_files[:]):
     shutil.copytree(ff_dir, ff_copy)
     os.chdir(work_dir)
 
-    charmmP = GMX_param(pdb_copy, keep_H=True)
+    charmmP = GMX_param(pdb_copy, box_size=150)
     # print(charmmP.get_box_size())
     # print(charmmP.prot_files, charmmP.lig_files)
     # charmmP.build_sys()
