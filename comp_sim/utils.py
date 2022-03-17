@@ -38,12 +38,12 @@ def find_diff(a, b):
 def run_and_save(command, log):
     tsk = subprocess.Popen(
             command,
-            stdout=subprocess.PIPE,
+            stdout=log, # subprocess.PIPE,
             stderr=subprocess.STDOUT,
             shell=True)
     tsk.wait()
-    line = tsk.stdout.readline()
-    log.write(line)
+#     line = tsk.stdout.readline()
+#     log.write(line)
 
 
 def get_mismatch(a, b):
