@@ -29,16 +29,12 @@ source activate MD_ff
 The code takes in pdb files and builds topology according to the chosen force field. Examples can be found [here][https://github.com/hengma1001/complex_sim/tree/master/examples]. 
 
 ### Inputs
-The code assumes the input files are seperated into protein file and ligands poses, both in PDB formats, which are obtained from WF0 outputs. It will require a script from WF0 to convert their outputs to PDB formate. The protein PDB is specified at line 20 and ligands at line 16. The ligand PDBs are fetched through `glob` that works similarly as `ls`.  
+It requires pdb file as input format. The amber function can automatically parameterize small molecule ligand with antechamber. The gmx function needs an additional entry to specify the force field path. 
 
 ### Running the code 
 The coda is simply running 
 ```
-python parameterize.py
+python param_amber.py
 ```
 after all the input path is specified in the script. 
-
-
-### Outputs 
-The output will be in N created folders, where N is number of ligands plus 1 protein. It should be ready for WF2 in the version running adrp. 
 
