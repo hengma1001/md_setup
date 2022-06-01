@@ -42,8 +42,6 @@ def run_and_save(command, log):
             stderr=subprocess.STDOUT,
             shell=True)
     tsk.wait()
-#     line = tsk.stdout.readline()
-#     log.write(line)
 
 
 def get_mismatch(a, b):
