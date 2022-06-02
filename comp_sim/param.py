@@ -202,16 +202,7 @@ class GMX_param(object):
         self.top = self.pdb.replace('.pdb', '.top')
         command = f'echo -n "1\n1\n" | pdb2gmx -f {self.pdb} '\
                 f'-o {self.pdb} -p {self.top}'
-        tsk = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=self.log, # subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            shell=True)
-        tsk.stdin.write('1\n')
-        tsk.stdin.write('1\n')
-        tsk.stdin.flush()
-        tsk.wait()
+        run_and_save(command, self.log)
 
     def get_box_size(self):
         mda_traj = mda.Universe(self.pdb)
