@@ -22,12 +22,23 @@ class AMBER_param(object):
             self, pdb,
             add_sol=True,
             lig_charge=0,
-            keep_H=False):
+            keep_H=False, 
+            forcefield='ff19SB', 
+            forcefield_rna='OL3',
+            forcefield_dna='OL15',
+            watermodel='opc',
+            padding=2):
 
         self.pdb = pdb
+        self.label = os.path.basename(pdb)[:-4]
         self.add_sol = add_sol
         self.lig_charge = lig_charge
         self.keep_H = keep_H
+        self.forcefield = forcefield
+        self.forcefield_rna = forcefield_rna
+        self.forcefield_dna = forcefield_dna
+        self.watermodel = watermodel
+        self.padding = padding
         self.pdb_dissect()
 
     def pdb_dissect(self):
@@ -44,6 +55,8 @@ class AMBER_param(object):
         for seg in mda_traj.atoms.segments:
             protein = seg.atoms.select_atoms('protein')
             not_protein = seg.atoms.select_atoms('not protein')
+            na_not_protein = not_protein.atoms.select_atoms('nucleic')
+            not_na_not_protein = not_protein.atoms.select_atoms('not nucleic')
             print(protein.n_atoms, not_protein.n_atoms)
             # processing protein
             if protein.n_atoms != 0:
@@ -55,6 +68,12 @@ class AMBER_param(object):
                     remove_hydrogen(protein_save, protein_save)
                 self.prot_files.append(protein_save)
 
+            # processing na
+            if na_not_protein.n_atoms != 0: 
+                na_not_protein_save = f'na_seg{seg.segid}.pdb'
+                na_not_protein.wrote(na_not_protein_save) 
+                self.prot_files.append(na_not_protein_save)
+            
             # processing ligands
             if not_protein.n_atoms != 0:
                 for i, res in enumerate(not_protein.residues):
@@ -107,14 +126,17 @@ class AMBER_param(object):
         produce tleap input file
         """
         output_path = os.path.abspath(os.path.dirname(self.pdb))
-        output_top = os.path.join(output_path, 'comp.prmtop')
-        output_inpcrd = os.path.join(output_path, 'comp.inpcrd')
-        output_pdb = os.path.join(output_path, 'comp.pdb')
+        output_top = os.path.join(output_path, '{self.label}.prmtop')
+        output_inpcrd = os.path.join(output_path, '{self.label}.inpcrd')
+        output_pdb = os.path.join(output_path, '{self.label}.pdb')
         with open(f'leap.in', 'w+') as leap:
             # default protein ff
-            leap.write("source leaprc.protein.ff14SB\n")
+            leap.write(f"source leaprc.protein.{self.forcefield}\n")
+            leap.write(f"source leaprc.RNA.{self.forcefield_rna}\n")
+            leap.write(f"source leaprc.DNA.{self.forcefield_dna}\n")
             leap.write("source leaprc.gaff\n")
-            leap.write("source leaprc.water.tip3p\n")
+            leap.write(f"source leaprc.water.{self.watermodel}\n")
+            # leap.write(f"source leaprc.")
             leap.write("set default PBRadii mbondi3\n")
 
             # load proteins
@@ -139,7 +161,7 @@ class AMBER_param(object):
             combine_insts = prot_insts + ' ' + lig_insts
             leap.write(f"comp = combine {{ {combine_insts} }}\n")
             if self.add_sol:
-                leap.write("solvatebox comp TIP3PBOX 15\n")
+                leap.write(f"solvatebox comp {self.watermodel.upper()}BOX {self.padding}\n")
                 leap.write("addions comp Na+ 0\n")
                 leap.write("addions comp Cl- 0\n")
             leap.write(f"saveAmberParm comp {output_top} {output_inpcrd}\n")
@@ -177,6 +199,7 @@ class GMX_param(object):
         self.keep_H = keep_H
         self.box_size = box_size
         self.box_padding = box_padding
+        self.ion_conc = ion_conc
         log_file = os.path.dirname(pdb) + '/gmx.log'
         self.log = open(log_file, 'wb')
         self.build_sys()
@@ -237,7 +260,7 @@ class GMX_param(object):
 
         command = f"echo SOL | genion -s {self.tpr}"\
             f" -o {self.pdb} -p {self.top}"\
-            f" -conc 0.15 -neutral"
+            f" -conc {self.ion_conc} -neutral"
         run_and_save(command, self.log)
 
         # verification
