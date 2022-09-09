@@ -1,5 +1,6 @@
 import os
 import h5py
+import logging
 import tempfile
 import subprocess
 import numpy as np
@@ -23,6 +24,13 @@ amber_ff_libs = [
 charmm_ff_libs = [
         '/home/hm/VM_shared/mpro/pose_san/inputs/'
         'inputs_charmm/charmm36-feb2021.ff/merged.rtp']
+        
+
+def build_logger(debug=0):
+    logger_level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(level=logger_level, format='%(asctime)s %(message)s')
+    logger = logging.getLogger(__name__)
+    return logger
 
 
 def trim_line(line):
