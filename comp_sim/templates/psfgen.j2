@@ -20,6 +20,12 @@ segment {{ seg.name }} {
 coordpdb {{ seg.pdb }} {{ seg.name }}
 {% endfor %} 
 
+
+# DISULFIDES
+{% for pair in disu_pairs %}
+patch DISU {{ pair }}
+{% endfor %} 
+
 guesscoord
 writepsf {{ sys_label }}.psf
 writepdb {{ sys_label }}.pdb
