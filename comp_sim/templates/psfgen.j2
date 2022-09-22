@@ -1,11 +1,21 @@
 package require psfgen
 
 # CHARMM36 FORCE FIELDS
-topology CHARMM36m/top_all36_prot.rtf
-topology CHARMM36m/top_all36_lipid.rtf
-topology CHARMM36m/toppar_water_ions_namd.str
+topology toppar/top_all35_ethers.rtf  
+topology toppar/top_all36_carb.rtf  
+topology toppar/top_all36_cgenff.rtf  
+topology toppar/top_all36_lipid_ljpme.rtf  
+topology toppar/top_all36_lipid.rtf  
+topology toppar/top_all36_na.rtf  
+topology toppar/top_all36_prot.rtf
+topology toppar/toppar_water_ions.str
+
 topology CHARMM36m/top_all36_carb_mod_sia.rtf
 topology CHARMM36m/toppar_all36_carb_glycopeptide.str
+topology CHARMM36m/toppar_all36_lipid_cholesterol.str
+topology CHARMM36m/toppar_all36_lipid_sphingo.str
+topology CHARMM36m/toppar_all36_lipid_inositol.str
+topology CHARMM36m/toppar_all36_palmitoyl_cys.str
 
 # ALIAS
 pdbalias atom CAL CA CAL
@@ -24,6 +34,30 @@ coordpdb {{ seg.pdb }} {{ seg.name }}
 # DISULFIDES
 {% for pair in disu_pairs %}
 patch DISU {{ pair }}
+{% endfor %} 
+
+# GLYCO
+{% for glyco in glyco_sites %}
+segment {{ glyco.name }} {
+    residue 1 BGLCNA
+    residue 2 BGLCNA
+    residue 3 BMAN
+    residue 4 AMAN
+    residue 5 BGLCNA
+    residue 6 AMAN
+    residue 7 BGLCNA
+    residue 8 AFUC
+}
+
+patch NGLB {{ glyco.site }} {{ glyco.name }}:1
+patch 14bb {{ glyco.name }}:1 {{ glyco.name }}:2
+patch 14bb {{ glyco.name }}:2 {{ glyco.name }}:3
+patch 13ab {{ glyco.name }}:3 {{ glyco.name }}:4
+patch 12ba {{ glyco.name }}:4 {{ glyco.name }}:5
+patch 16ab {{ glyco.name }}:3 {{ glyco.name }}:6
+patch 12ba {{ glyco.name }}:6 {{ glyco.name }}:7
+patch 16ab {{ glyco.name }}:1 {{ glyco.name }}:8
+
 {% endfor %} 
 
 guesscoord
