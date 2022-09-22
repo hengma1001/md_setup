@@ -55,7 +55,7 @@ class NAMD_param(object):
         produce tleap input file
         """
         jj_env = jinja2.Environment(
-            loader=jinja2.PackageLoader("comp_sim"),
+            loader=jinja2.PackageLoader("md_setup"),
             trim_blocks=True,
             lstrip_blocks=True,
             autoescape=False,
