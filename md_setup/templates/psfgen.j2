@@ -1,4 +1,6 @@
 package require psfgen
+package require solvate 
+package require autoionize
 
 # CHARMM36 FORCE FIELDS
 topology toppar/top_all35_ethers.rtf  
@@ -63,6 +65,9 @@ patch 16ab {{ glyco.name }}:1 {{ glyco.name }}:8
 guesscoord
 writepsf {{ sys_label }}.psf
 writepdb {{ sys_label }}.pdb
+
+solvate {{ sys_label }}.psf {{ sys_label }}.pdb -z 10 +z 10 -o {{ sys_label }}
+autoionize -psf {{ sys_label }}.psf -pdb  {{ sys_label }}.pdb -sc 0.15 -cation SOD -o {{ sys_label }}
 
 quit
 exit
