@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 import jinja2
 import subprocess
 # import tempfile
@@ -33,7 +34,7 @@ class NAMD_param(object):
             self, pdb,
             add_sol=True,
             disu_cutoff:float=3,
-            glycosylation:bool=False,
+            glycosylation:Optional[str]=False,
             ):
 
         self.pdb = pdb
@@ -88,8 +89,8 @@ class NAMD_param(object):
                 protein_seg(name=seg.segid, pdb=seg_save)
             )
         self._build_disu(mda_u)
-        if self.glycosylation == True:
-            self._build_glyco(mda_u)
+        if self.glycosylation:
+            self._build_glyco(mda_u, self.glycosylation)
         else: 
             self.glyco_sites = []
 
@@ -107,14 +108,18 @@ class NAMD_param(object):
             disu_st = [f"{sulfur[i].segid}:{sulfur[i].resid}" for i in pair]
             self.disu_strs.append(' '.join(disu_st))
 
-    def _build_glyco(self, mda_u):
+    def _build_glyco(self, mda_u, glycosylation):
         """
         Find and add glyco to the N-glycosylation site on proteins if 
         required, Asn-X-Ser/Thr, X is any AA other than Pro. It's only 
         designed for the spike RBD sites for the moment as limited by 
         glyco type. 
         """ 
-        gly_sites = [res for res in mda_u.residues 
+        if glycosylation is str and glycosylation in mda_u.segments.segids: 
+            gly_chains = mda_u.select_atoms(f"segid {glycosylation}")
+        else: 
+            gly_chains = mda_u.atoms
+        gly_sites = [res for res in gly_chains.residues 
                 if res.resname == 'ASN' 
                 and mda_u.residues.resnames[res.resindex+1] != 'PRO' 
                 and mda_u.residues.resnames[res.resindex+2] in ['SER', 'THR']]
