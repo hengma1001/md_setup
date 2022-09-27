@@ -32,12 +32,14 @@ class NAMD_param(object):
 
     def __init__(
             self, pdb,
+            ff_path: Path = '.',
             add_sol=True,
             disu_cutoff:float=3,
-            glycosylation:Optional[str]=False,
+            glycosylation:Optional[str]=None,
             ):
 
         self.pdb = pdb
+        self.ff_path = ff_path
         self.pdb_label = os.path.basename(pdb)[:-4]
         self.add_sol = add_sol
         self.disu_cutoff = disu_cutoff
@@ -64,9 +66,11 @@ class NAMD_param(object):
         template = jj_env.get_template("psfgen.j2")
         scripts = template.render(
             {'sys_label': self.pdb_label, 
+            'ff_path': self.ff_path,
             'segs': self.segments, 
             'disu_pairs': self.disu_strs,
-            'glyco_sites': self.glyco_sites
+            'glyco_sites': self.glyco_sites,
+            'add_sol': self.add_sol,
             }
             )
         with open('psfgen.tcl', 'w') as f: 
@@ -115,10 +119,11 @@ class NAMD_param(object):
         designed for the spike RBD sites for the moment as limited by 
         glyco type. 
         """ 
-        if glycosylation is str and glycosylation in mda_u.segments.segids: 
+        if isinstance(glycosylation, str) and glycosylation in mda_u.segments.segids: 
             gly_chains = mda_u.select_atoms(f"segid {glycosylation}")
         else: 
             gly_chains = mda_u.atoms
+
         gly_sites = [res for res in gly_chains.residues 
                 if res.resname == 'ASN' 
                 and mda_u.residues.resnames[res.resindex+1] != 'PRO' 

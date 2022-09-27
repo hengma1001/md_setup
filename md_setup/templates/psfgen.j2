@@ -66,8 +66,10 @@ guesscoord
 writepsf {{ sys_label }}.psf
 writepdb {{ sys_label }}.pdb
 
+{% if add_sol %}
 solvate {{ sys_label }}.psf {{ sys_label }}.pdb -z 10 +z 10 -o {{ sys_label }}
 autoionize -psf {{ sys_label }}.psf -pdb  {{ sys_label }}.pdb -sc 0.15 -cation SOD -o {{ sys_label }}
+{% endif %}
 
 quit
 exit
