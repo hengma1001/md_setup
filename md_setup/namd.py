@@ -16,7 +16,7 @@ logger = build_logger()
 
 class protein_seg(BaseModel): 
     name: str
-    pdb: Path
+    pdb: str
 
 class glyco_site(BaseModel): 
     name: str
@@ -33,8 +33,8 @@ class NAMD_param(object):
     def __init__(
             self, pdb,
             ff_path: Path = '.',
-            add_sol=True,
-            disu_cutoff:float=3,
+            add_sol: bool =True,
+            disu_cutoff:float=3.,
             glycosylation:Optional[str]=None,
             ):
 
@@ -119,10 +119,12 @@ class NAMD_param(object):
         designed for the spike RBD sites for the moment as limited by 
         glyco type. 
         """ 
-        if isinstance(glycosylation, str) and glycosylation in mda_u.segments.segids: 
-            gly_chains = mda_u.select_atoms(f"segid {glycosylation}")
-        else: 
+        if isinstance(glycosylation, str): 
+            gly_chains = mda_u.select_atoms(glycosylation)
+        elif glycosylation == True:
             gly_chains = mda_u.atoms
+        else: 
+            self.glyco_sites = []
 
         gly_sites = [res for res in gly_chains.residues 
                 if res.resname == 'ASN' 
