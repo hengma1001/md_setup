@@ -7,9 +7,9 @@ from openmm import unit
 pdb_file = "ncd_dimers_0.pdb"
 pdb = PDBFile(pdb_file)
 label = os.path.basename(pdb_file)[:-4]
-n = 2
-n_copy_max = 4 # n**3
-spacing = 10.0
+n = 2 # numbers of copies on each axis
+n_copy_max = 4 # n**3 # limit on number of protein dups
+spacing = 10.0 # space between pairs of neighbouring proteins
 output_filename = f"{label}_{n}_{int(spacing)}nm.pdb"
 
 model = Modeller(pdb.topology, pdb.positions)
