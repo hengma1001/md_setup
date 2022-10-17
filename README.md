@@ -19,7 +19,7 @@ conda env create -f env.yml
 The conda environment should be available to load with 
 
 ```bash
-source activate MD_ff
+source activate md_setup
 ```
 
 
