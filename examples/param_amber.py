@@ -3,7 +3,7 @@ import sys
 import shutil
 
 sys.path.append('..')
-from comp_sim.param import AMBER_param
+from md_setup.param import AMBER_param
 
 host_dir = os.getcwd()
 # specify your input pdbs
