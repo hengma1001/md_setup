@@ -254,7 +254,7 @@ def get_protein(pdb_file):
 
 
 def get_formal_charge(pdb_file): 
-    mol = Chem.MolfromPDBFile(pdb_file)
+    mol = Chem.MolFromPDBFile(pdb_file)
     return Chem.GetFormalCharge(mol)
 
 def is_protein(pdb_file):
