@@ -30,7 +30,8 @@ class GMX_param(object):
             keep_H=False,
             box_size=0, 
             box_padding=1.,
-            ion_conc=0.15):
+            ion_conc=0.15, 
+            conf_format='gro'):
 
         self.pdb = pdb
         self.add_sol = add_sol
@@ -38,6 +39,8 @@ class GMX_param(object):
         self.keep_H = keep_H
         self.box_size = box_size
         self.box_padding = box_padding
+        self.ion_conc = ion_conc
+        self.conf_format = conf_format
         log_file = os.path.dirname(pdb) + '/gmx.log'
         self.log = open(log_file, 'wb')
         logger.info(f"Processing {pdb}.")
@@ -104,13 +107,23 @@ class GMX_param(object):
 
         # verification
         command = f"grompp -f ions.mdp"\
-            f" -c {self.pdb} -p {self.top}p"\
+            f" -c {self.pdb} -p {self.top}"\
             f" -o {self.tpr}"
         tsk = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             shell=True)
+
+        # add more conf output
+        if self.conf_format:
+            command = f"editconf -f {self.pdb}"\
+                f" -o {self.pdb[:-3] + self.conf_format}"
+            tsk = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                shell=True)
 
         os.system("rm \\#*")
 
