@@ -11,6 +11,7 @@ import parmed as pmd
 # import simtk.openmm as omm
 import simtk.unit as u
 
+from rdkit import Chem
 from MDAnalysis.analysis import distances
 from MDAnalysis.analysis import align
 
@@ -251,6 +252,10 @@ def get_protein(pdb_file):
     lig.write(pdb_lig)
     return pdb_lig
 
+
+def get_formal_charge(pdb_file): 
+    mol = Chem.MolfromPDBFile(pdb_file)
+    return Chem.GetFormalCharge(mol)
 
 def is_protein(pdb_file):
     mda_trj = mda.Universe(pdb_file)

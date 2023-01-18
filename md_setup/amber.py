@@ -4,7 +4,7 @@ import subprocess
 import MDAnalysis as mda
 
 from .utils import add_hydrogen, remove_hydrogen, missing_hydrogen
-from .utils import build_logger
+from .utils import build_logger, get_formal_charge
 from .utils import match_pdb_to_amberff
 
 logger = build_logger()
@@ -19,7 +19,6 @@ class AMBER_param(object):
     def __init__(
             self, pdb,
             add_sol=True,
-            lig_charge=0,
             keep_H=False, 
             forcefield='ff19SB', 
             forcefield_rna='OL3',
@@ -35,7 +34,6 @@ class AMBER_param(object):
         self.pdb = pdb
         self.label = os.path.basename(pdb)[:-4]
         self.add_sol = add_sol
-        self.lig_charge = lig_charge
         self.keep_H = keep_H
         self.forcefield = forcefield
         self.forcefield_rna = forcefield_rna
@@ -108,9 +106,9 @@ class AMBER_param(object):
         #     -an y -nc {lig_charge}
         #     -ek "qm_theory='AM1', grms_tol=0.0005,
         #     scfconv=1.d-9, ndiis_attempts=1000" """
-        lig_charge = self.lig_charge
         for i, lig in enumerate(self.lig_files):
             lig_tag = os.path.basename(lig)[:-4]
+            lig_charge = get_formal_charge(lig)
             if missing_hydrogen(lig):
                 lig = add_hydrogen(lig)
             antechamber_command = \
