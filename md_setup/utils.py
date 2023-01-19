@@ -12,6 +12,7 @@ import parmed as pmd
 import simtk.unit as u
 
 from rdkit import Chem
+from mendeleev import element
 from MDAnalysis.analysis import distances
 from MDAnalysis.analysis import align
 
@@ -256,6 +257,13 @@ def get_protein(pdb_file):
 def get_formal_charge(pdb_file): 
     mol = Chem.MolFromPDBFile(pdb_file)
     return Chem.GetFormalCharge(mol)
+
+
+def get_n_electron(pdb_file): 
+    mda_u = mda.Universe(pdb_file)
+    n_ele = [element(atom.element).atomic_number for atom in mda_u.atoms]
+    return sum(n_ele)
+
 
 def is_protein(pdb_file):
     mda_trj = mda.Universe(pdb_file)

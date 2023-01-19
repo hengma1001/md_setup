@@ -4,7 +4,7 @@ import subprocess
 import MDAnalysis as mda
 
 from .utils import add_hydrogen, remove_hydrogen, missing_hydrogen
-from .utils import build_logger, get_formal_charge
+from .utils import build_logger, get_formal_charge, get_n_electron
 from .utils import match_pdb_to_amberff
 
 logger = build_logger()
@@ -108,9 +108,9 @@ class AMBER_param(object):
         #     scfconv=1.d-9, ndiis_attempts=1000" """
         for i, lig in enumerate(self.lig_files):
             lig_tag = os.path.basename(lig)[:-4]
-            lig_charge = get_formal_charge(lig)
             if missing_hydrogen(lig):
                 lig = add_hydrogen(lig)
+            lig_charge = get_formal_charge(lig) if get_n_electron(lig) % 2 != 0 else 0
             antechamber_command = \
                 f'antechamber -i {lig} -fi pdb -o {lig_tag}.mol2 '\
                 f'-fo mol2 -c bcc -pf y -an y -nc {lig_charge}'
