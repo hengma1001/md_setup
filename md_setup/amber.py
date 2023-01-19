@@ -125,7 +125,12 @@ class AMBER_param(object):
         """
         self.param_ligs()
         comp_info = self.write_tleapIN()
+        # skip if already run
+        if (os.path.exists(comp_info['top_file']) and
+            os.path.exists(comp_info['pdb_file'])):
+            return comp_info
         subprocess.check_output(f'tleap -f leap.in', shell=True)
+        # checking whether tleap is done
         if (os.path.exists(comp_info['top_file']) and
             os.path.exists(comp_info['pdb_file'])):
             return comp_info
