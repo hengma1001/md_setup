@@ -127,6 +127,7 @@ class AMBER_param(object):
         # skip if already run
         if (os.path.exists(self.output_top) and
             os.path.exists(self.output_inpcrd)):
+            logger.info(f"Topology found, skipping building {os.path.basename(self.output_pdb)}...")
             return 
         
         self.param_ligs()
