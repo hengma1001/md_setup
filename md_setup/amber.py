@@ -68,7 +68,7 @@ class AMBER_param(object):
             not_protein = seg.atoms.select_atoms('not protein')
             na_not_protein = not_protein.atoms.select_atoms('nucleic')
             not_na_not_protein = not_protein.atoms.select_atoms('not nucleic')
-            print(protein.n_atoms, not_protein.n_atoms)
+            # print(protein.n_atoms, not_protein.n_atoms)
             # processing protein
             if protein.n_atoms != 0:
                 protein_save = f'prot_seg{seg.segid}_{seg.segindex}.pdb'
@@ -123,28 +123,32 @@ class AMBER_param(object):
         """
         parameterize the complex
         """
+        self.get_outputs()
+        # skip if already run
+        if (os.path.exists(self.output_top) and
+            os.path.exists(self.output_inpcrd)):
+            return 
+        
         self.param_ligs()
         comp_info = self.write_tleapIN()
-        # skip if already run
-        if (os.path.exists(comp_info['top_file']) and
-            os.path.exists(comp_info['pdb_file'])):
-            return comp_info
         subprocess.check_output(f'tleap -f leap.in', shell=True)
         # checking whether tleap is done
-        if (os.path.exists(comp_info['top_file']) and
-            os.path.exists(comp_info['pdb_file'])):
+        if (os.path.exists(self.output_top) and
+            os.path.exists(self.output_inpcrd)):
             return comp_info
         else:
             raise Exception("Leap failed to build topology, check errors...")
+    
+    def get_outputs(self): 
+        self.output_path = os.path.abspath(os.path.dirname(self.pdb))
+        self.output_top = os.path.join(self.output_path, f'{self.label}.prmtop')
+        self.output_inpcrd = os.path.join(self.output_path, f'{self.label}.inpcrd')
+        self.output_pdb = os.path.join(self.output_path, f'{self.label}.pdb')
 
     def write_tleapIN(self):
         """
         produce tleap input file
         """
-        output_path = os.path.abspath(os.path.dirname(self.pdb))
-        output_top = os.path.join(output_path, f'{self.label}.prmtop')
-        output_inpcrd = os.path.join(output_path, f'{self.label}.inpcrd')
-        output_pdb = os.path.join(output_path, f'{self.label}.pdb')
         with open(f'leap.in', 'w+') as leap:
             # default protein ff
             leap.write(f"source leaprc.protein.{self.forcefield}\n")
@@ -184,10 +188,8 @@ class AMBER_param(object):
                     leap.write('/n')
                 leap.write(f"addions comp {self.cation} {self.n_cations}\n")
                 leap.write(f"addions comp {self.anion} {self.n_anions}\n")
-            leap.write(f"saveAmberParm comp {output_top} {output_inpcrd}\n")
-            leap.write(f"savepdb comp {output_pdb}\n")
+            leap.write(f"saveAmberParm comp {self.output_top} {self.output_inpcrd}\n")
+            leap.write(f"savepdb comp {self.output_pdb}\n")
             leap.write("quit\n")
-        comp_info = {'top_file': output_top,
-                     'inpcrd_file': output_inpcrd,
-                     'pdb_file': output_pdb}
-        return comp_info
+        return 1
+
