@@ -131,12 +131,13 @@ class AMBER_param(object):
             return 
         
         self.param_ligs()
-        comp_info = self.write_tleapIN()
+        self.write_tleapIN()
         subprocess.check_output(f'tleap -f leap.in', shell=True)
         # checking whether tleap is done
         if (os.path.exists(self.output_top) and
             os.path.exists(self.output_inpcrd)):
-            return comp_info
+            logger.info(f"Successfully built {os.path.basename(self.output_pdb)}...")
+            return 
         else:
             raise Exception("Leap failed to build topology, check errors...")
     
