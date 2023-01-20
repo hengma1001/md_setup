@@ -288,8 +288,8 @@ def get_lig_charge(pdb_file):
     elif n_electron % 2 != 0 & lig_charge % 2 != 0:
         return lig_charge
     else:
-        raise Exception(f"Number of electron and charge "\
-            "are mismatch for ligand {os.path.abspath(pdb_file)}")
+        raise Exception(f"Number of electron (n_electron) and charge (lig_charge) "\
+            f"are mismatch for ligand {os.path.abspath(pdb_file)}")
 
 
 def get_n_electron(pdb_file): 
