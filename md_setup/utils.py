@@ -283,9 +283,9 @@ def get_lig_charge(pdb_file):
     except: 
         lig_charge = get_formal_charge(pdb_file, format='pdb')
     n_electron = get_n_electron(pdb_file)
-    if n_electron % 2 == 0 & lig_charge % 2 == 0: 
+    if (n_electron % 2 == 0) & (lig_charge % 2 == 0): 
         return lig_charge 
-    elif n_electron % 2 != 0 & lig_charge % 2 != 0:
+    elif (n_electron % 2 != 0) & (lig_charge % 2 != 0):
         return lig_charge
     else:
         raise Exception(f"Number of electron {n_electron} and charge {lig_charge} "\
