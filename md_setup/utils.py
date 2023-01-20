@@ -261,7 +261,7 @@ def update_pdb_obabel(pdb_file):
     """
     mol2_ob = pdb_file[:-4] + '_ob.mol2'
     subprocess.check_output(
-        f'obabel -ipdb {pdb_file} -h -omol2 >  {mol2_ob}',
+        f'obabel -ipdb {pdb_file} -omol2 >  {mol2_ob}',
         shell=True)
     return mol2_ob
 
