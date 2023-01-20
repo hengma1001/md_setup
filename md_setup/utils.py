@@ -259,16 +259,16 @@ def update_pdb_obabel(pdb_file):
     add correct conect info to pdb structure 
     obabel -ipdb lig.pdb -opdb >  lig_obabel.pdb
     """
-    pdb_ob = pdb_file[:-4] + '_ob.pdb'
+    mol2_ob = pdb_file[:-4] + '_ob.mol2'
     subprocess.check_output(
-        f'obabel -ipdb {pdb_file} -h -opdb >  {pdb_ob}',
+        f'obabel -ipdb {pdb_file} -h -omol2 >  {mol2_ob}',
         shell=True)
-    return pdb_ob
+    return mol2_ob
 
 
 def get_formal_charge(pdb_file): 
-    pdb_ob = update_pdb_obabel(pdb_file)
-    mol = Chem.MolFromPDBFile(pdb_ob)
+    mol2_ob = update_pdb_obabel(pdb_file)
+    mol = Chem.MolFromMol2File(mol2_ob)
     return Chem.GetFormalCharge(mol)
 
 
