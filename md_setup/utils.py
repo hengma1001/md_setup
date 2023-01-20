@@ -254,22 +254,42 @@ def get_protein(pdb_file):
     return pdb_lig
 
 
-def update_pdb_obabel(pdb_file):
+def update_pdb_obabel(pdb_file, format='pdb'):
     """
     add correct conect info to pdb structure 
     obabel -ipdb lig.pdb -opdb >  lig_obabel.pdb
     """
-    pdb_ob = pdb_file[:-4] + '_ob.pdb'
+    pdb_ob = pdb_file[:-4] + f'_ob.{format}'
     subprocess.check_output(
-        f'obabel -ipdb {pdb_file} -opdb >  {pdb_ob}',
+        f'obabel -ipdb {pdb_file} -o{format} >  {pdb_ob}',
         shell=True)
     return pdb_ob
 
 
-def get_formal_charge(pdb_file): 
-    pdb_ob = update_pdb_obabel(pdb_file)
-    mol = Chem.MolFromPDBFile(pdb_ob)
+def get_formal_charge(pdb_file, format='pdb'): 
+    pdb_ob = update_pdb_obabel(pdb_file, format=format)
+    if format == 'pdb':
+        mol = Chem.MolFromPDBFile(pdb_ob)
+    elif format == 'mol2': 
+        mol = Chem.MolFromMol2File(pdb_ob)
+    else: 
+        raise Exception("Unknown format...")
     return Chem.GetFormalCharge(mol)
+
+
+def get_lig_charge(pdb_file): 
+    try:
+        lig_charge = get_formal_charge(pdb_file, format='mol2')
+    except: 
+        lig_charge = get_formal_charge(pdb_file, format='pdb')
+    n_electron = get_n_electron(pdb_file)
+    if n_electron % 2 == 0 & lig_charge % 2 == 0: 
+        return lig_charge 
+    elif n_electron % 2 != 0 & lig_charge % 2 != 0:
+        return lig_charge
+    else:
+        raise Exception(f"Number of electron and charge "\
+            "are mismatch for ligand {os.path.abspath(pdb_file)}")
 
 
 def get_n_electron(pdb_file): 
