@@ -2,7 +2,6 @@ import os
 import sys
 import shutil
 
-sys.path.append('..')
 from md_setup.param import AMBER_param
 
 host_dir = os.getcwd()
