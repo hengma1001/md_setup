@@ -3,6 +3,8 @@ import h5py
 import logging
 import tempfile
 import subprocess
+import warnings
+
 import numpy as np
 import MDAnalysis as mda
 import parmed as pmd
@@ -254,6 +256,10 @@ def get_protein(pdb_file):
     return pdb_lig
 
 
+def get_lig_name(lig_pdb):
+    mda_u = mda.Universe(lig_pdb)
+    return mda_u.atoms[0].resname
+
 def update_pdb_obabel(pdb_file, format='pdb'):
     """
     add correct conect info to pdb structure 
@@ -267,11 +273,11 @@ def update_pdb_obabel(pdb_file, format='pdb'):
 
 
 def get_formal_charge(pdb_file, format='pdb'): 
-    pdb_ob = update_pdb_obabel(pdb_file, format=format)
+    pdb_file = update_pdb_obabel(pdb_file, format=format)
     if format == 'pdb':
-        mol = Chem.MolFromPDBFile(pdb_ob)
+        mol = Chem.MolFromPDBFile(pdb_file)
     elif format == 'mol2': 
-        mol = Chem.MolFromMol2File(pdb_ob)
+        mol = Chem.MolFromMol2File(pdb_file)
     else: 
         raise Exception("Unknown format...")
     return Chem.GetFormalCharge(mol)
@@ -287,6 +293,11 @@ def get_lig_charge(pdb_file):
         return lig_charge 
     elif (n_electron % 2 != 0) & (lig_charge % 2 != 0):
         return lig_charge
+    elif n_electron % 2 == 0: 
+        warnings.warn(f"Using 0 for ligand charge. However, number of electron "\
+            f"{n_electron} and charge {lig_charge} "\
+            f"are mismatch for ligand {os.path.abspath(pdb_file)}")
+        return 0
     else:
         raise Exception(f"Number of electron {n_electron} and charge {lig_charge} "\
             f"are mismatch for ligand {os.path.abspath(pdb_file)}")
