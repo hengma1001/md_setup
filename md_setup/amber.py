@@ -4,7 +4,7 @@ import subprocess
 import MDAnalysis as mda
 
 from .utils import add_hydrogen, remove_hydrogen, missing_hydrogen
-from .utils import build_logger, get_lig_charge
+from .utils import build_logger, get_lig_charge, get_lig_name
 from .utils import match_pdb_to_amberff
 
 logger = build_logger()
@@ -20,6 +20,8 @@ class AMBER_param(object):
             self, pdb,
             add_sol=True,
             keep_H=False, 
+            lig_charges={},
+            lig_param_path='',
             forcefield='ff19SB', 
             forcefield_rna='OL3',
             forcefield_dna='OL15',
@@ -35,6 +37,8 @@ class AMBER_param(object):
         self.label = os.path.basename(pdb)[:-4]
         self.add_sol = add_sol
         self.keep_H = keep_H
+        self.lig_charges = lig_charges
+        self.lig_param_path = lig_param_path
         self.forcefield = forcefield
         self.forcefield_rna = forcefield_rna
         self.forcefield_dna = forcefield_dna
@@ -108,9 +112,13 @@ class AMBER_param(object):
         #     scfconv=1.d-9, ndiis_attempts=1000" """
         for lig in self.lig_files:
             lig_tag = os.path.basename(lig)[:-4]
+            lig_name = get_lig_name(lig)
             if missing_hydrogen(lig):
-                lig = add_hydrogen(lig) 
-            lig_charge = get_lig_charge(lig)
+                lig = add_hydrogen(lig)
+            if lig_name in self.lig_charges:
+                lig_charge = self.lig_charges[lig_name]
+            else:
+                lig_charge = get_lig_charge(lig)
             
             antechamber_command = \
                 f'antechamber -i {lig} -fi pdb -o {lig_tag}.mol2 '\
@@ -131,7 +139,8 @@ class AMBER_param(object):
             logger.info(f"Topology found, skipping building {os.path.basename(self.output_pdb)}...")
             return 
         
-        self.param_ligs()
+        if not self.lig_param_path:
+            self.param_ligs()
         self.write_tleapIN()
         subprocess.check_output(f'tleap -f leap.in', shell=True)
         # checking whether tleap is done
@@ -154,7 +163,10 @@ class AMBER_param(object):
         """
         with open(f'leap.in', 'w+') as leap:
             # default protein ff
-            leap.write(f"source leaprc.protein.{self.forcefield}\n")
+            if 'old' in self.forcefield:
+                leap.write(f"source oldff/leaprc.{self.forcefield.replace('-old', '')}\n")
+            else:
+                leap.write(f"source leaprc.protein.{self.forcefield}\n")
             leap.write(f"source leaprc.RNA.{self.forcefield_rna}\n")
             leap.write(f"source leaprc.DNA.{self.forcefield_dna}\n")
             leap.write("source leaprc.gaff\n")
@@ -175,8 +187,12 @@ class AMBER_param(object):
             lig_insts = []
             for lig in self.lig_files:
                 lig_tag = os.path.basename(lig)[:-4]
-                leap.write(f"{lig_tag} = loadmol2 {lig_tag}.mol2\n")
-                leap.write(f"loadAmberParams {lig_tag}.frcmod\n")
+                if self.lig_param_path:
+                    lig_path_tag = f'{self.lig_param_path}/{lig_tag}'
+                else:
+                    lig_path_tag = lig_tag
+                leap.write(f"{lig_tag} = loadmol2 {lig_path_tag}.mol2\n")
+                leap.write(f"loadAmberParams {lig_path_tag}.frcmod\n")
                 lig_insts.append(lig_tag)
             lig_insts = ' '.join(lig_insts)
 
