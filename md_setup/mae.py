@@ -34,7 +34,8 @@ class MAEFile():
     
     def _parse_atom_line(self, line):
         line_split = line.replace('"', '').split()
-        elem = element(line_split[1][0])
+        elem = [i for i in line_split[1] if not i.isdigit()][0]
+        elem = element(elem)
         atom = Atom(atomic_number=elem.atomic_number, name=line_split[1],
                     mass=elem.atomic_weight, number=line_split[0])
         atom.xx, atom.xy, atom.xz = np.array(line_split[6:9], dtype=float)
