@@ -70,6 +70,7 @@ class AMBER_param(object):
         mda_traj = mda.Universe(self.pdb)
         self.prot_files = []
         self.lig_files = []
+        self.ion_files = []
         # not_na_not_protein = mda_traj.select_atoms('not protein and not nucleic')
         # if not_na_not_protein.n_atoms == 0:
         #     self.prot_files.append(self.pdb)
@@ -101,9 +102,14 @@ class AMBER_param(object):
             # processing ligands
             if not_protein.n_atoms != 0:
                 for i, res in enumerate(not_protein.residues):
-                    lig_save = f"lig_seg{seg.segid}_{i}.pdb"
-                    res.atoms.write(lig_save)
-                    self.lig_files.append(lig_save)
+                    if res.atoms.n_atoms == 1:
+                        ion_save = f"ion_seg{seg.segid}_{i}.pdb"
+                        res.atoms.write(ion_save)
+                        self.ion_files.append(ion_save)
+                    else:
+                        lig_save = f"lig_seg{seg.segid}_{i}.pdb"
+                        res.atoms.write(lig_save)
+                        self.lig_files.append(lig_save)
 
     def param_ligs(self):
         """
@@ -184,6 +190,9 @@ class AMBER_param(object):
                 leap.write(f"source leaprc.DNA.{self.forcefield_dna}\n")
             leap.write("source leaprc.gaff\n")
             leap.write(f"source leaprc.water.{self.watermodel}\n")
+            if len(self.ion_files) > 0:
+                leap.write(f"loadAmberParams frcmod.ionslm_126_{self.watermodel}\n")
+
             # leap.write(f"source leaprc.")
             leap.write("set default PBRadii mbondi3\n")
 
