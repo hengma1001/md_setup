@@ -35,6 +35,7 @@ class AMBER_param(object):
         forcefield_rna=None,
         forcefield_dna=None,
         watermodel="opc",
+        ion_ff=None,
         padding=20,
         cubic=True,
         cation="Na+",
@@ -52,6 +53,7 @@ class AMBER_param(object):
         self.forcefield_rna = forcefield_rna
         self.forcefield_dna = forcefield_dna
         self.watermodel = watermodel
+        self.ion_ff = ion_ff
         self.padding = padding
         self.cubic = cubic
         self.cation = cation
@@ -191,7 +193,10 @@ class AMBER_param(object):
             leap.write("source leaprc.gaff\n")
             leap.write(f"source leaprc.water.{self.watermodel}\n")
             if len(self.ion_files) > 0:
-                leap.write(f"loadAmberParams frcmod.ionslm_126_{self.watermodel}\n")
+                if self.ion_ff:
+                    leap.write(f"loadAmberParams frcmod.{self.ion_ff}\n")
+                else:
+                    leap.write(f"loadAmberParams frcmod.ionsjc_{self.watermodel}\n")
 
             # leap.write(f"source leaprc.")
             leap.write("set default PBRadii mbondi3\n")
@@ -204,6 +209,14 @@ class AMBER_param(object):
                 prot_insts.append(leap_name)
             prot_insts = " ".join(prot_insts)
             # leap.write("saveAmberParm rec apo.prmtop apo.inpcrd\n")
+
+            # load ions
+            ion_insts = []
+            for i, ion_file in enumerate(self.ion_files):
+                leap_name = f"ion_{i}"
+                leap.write(f"{leap_name} = loadPDB {ion_file}\n")
+                ion_insts.append(leap_name)
+            ion_insts = " ".join(ion_insts)
 
             # load ligands
             lig_insts = []
@@ -219,16 +232,16 @@ class AMBER_param(object):
             lig_insts = " ".join(lig_insts)
 
             # leap.write("saveAmberParm lig lig.prmtop lig.inpcrd\n")
-            combine_insts = prot_insts + " " + lig_insts
+            combine_insts = prot_insts + " " + ion_insts + " " + lig_insts
             leap.write(f"comp = combine {{ {combine_insts} }}\n")
             if self.add_sol:
                 leap.write(
                     f"solvatebox comp {self.watermodel.upper()}BOX {self.padding}"
                 )
                 if self.cubic:
-                    leap.write(f" iso\n")
+                    leap.write(" iso\n")
                 else:
-                    leap.write("/n")
+                    leap.write("\n")
                 leap.write(f"addions comp {self.cation} {self.n_cations}\n")
                 leap.write(f"addions comp {self.anion} {self.n_anions}\n")
             leap.write(f"saveAmberParm comp {self.output_top} {self.output_inpcrd}\n")
