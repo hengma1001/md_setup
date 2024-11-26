@@ -31,10 +31,10 @@ class AMBER_param(object):
         keep_H=False,
         lig_charges={},
         lig_param_path="",
-        forcefield="ff19SB",
+        forcefield="ff14SB",
         forcefield_rna=None,
         forcefield_dna=None,
-        watermodel="opc",
+        watermodel="tip3p",
         ion_ff=None,
         padding=20,
         cubic=True,
@@ -60,6 +60,12 @@ class AMBER_param(object):
         self.n_cations = n_cations
         self.anion = anion
         self.n_anions = n_anions
+
+        self.prot_files = []
+        self.lig_files = []
+        self.ion_files = []
+        self.sol_file = None
+
         self.pdb_dissect()
 
     def pdb_dissect(self):
@@ -70,20 +76,26 @@ class AMBER_param(object):
         NOTE: it requires proper chain IDs for each segment
         """
         mda_traj = mda.Universe(self.pdb)
-        self.prot_files = []
-        self.lig_files = []
-        self.ion_files = []
-        # not_na_not_protein = mda_traj.select_atoms('not protein and not nucleic')
-        # if not_na_not_protein.n_atoms == 0:
-        #     self.prot_files.append(self.pdb)
-        #     return
+
+        sol_sel = mda_traj.select_atoms("resname HOH or resname WAT or resname SOL")
+        if sol_sel.n_atoms > 0:
+            sol_save = f"solvent.pdb"
+            sol_sel.write(sol_save)
+            self.sol_file = sol_save
+            no_sol = mda_traj.atoms - sol_sel
+        else:
+            no_sol = mda_traj.atoms
 
         # loop over segments in the complex
-        for seg in mda_traj.atoms.segments:
-            protein = seg.atoms.select_atoms("protein")
-            not_protein = seg.atoms.select_atoms("not protein")
-            na_not_protein = not_protein.atoms.select_atoms("nucleic")
-            not_na_not_protein = not_protein.atoms.select_atoms("not nucleic")
+        for seg in no_sol.segments:
+            seg_sol = seg.atoms.select_atoms(
+                "resname HOH or resname WAT or resname SOL"
+            )
+            protein = seg.atoms.select_atoms("protein") - seg_sol
+            na = seg.atoms.select_atoms("nucleic") - seg_sol
+            not_na_not_protein = (
+                seg.atoms.select_atoms("not protein and not nucleic") - seg_sol
+            )
             # print(protein.n_atoms, not_protein.n_atoms)
             # processing protein
             if protein.n_atoms != 0:
@@ -96,14 +108,14 @@ class AMBER_param(object):
                 self.prot_files.append(protein_save)
 
             # processing na
-            if na_not_protein.n_atoms != 0:
-                na_not_protein_save = f"na_seg{seg.segid}.pdb"
-                na_not_protein.wrote(na_not_protein_save)
-                self.prot_files.append(na_not_protein_save)
+            if na.n_atoms != 0:
+                na_save = f"na_seg{seg.segid}.pdb"
+                na.wrote(na_save)
+                self.prot_files.append(na_save)
 
             # processing ligands
-            if not_protein.n_atoms != 0:
-                for i, res in enumerate(not_protein.residues):
+            if not_na_not_protein.n_atoms != 0:
+                for i, res in enumerate(not_na_not_protein.residues):
                     if res.atoms.n_atoms == 1:
                         ion_save = f"ion_seg{seg.segid}_{i}.pdb"
                         res.atoms.write(ion_save)
@@ -152,7 +164,7 @@ class AMBER_param(object):
         self.get_outputs()
         # skip if already run
         if os.path.exists(self.output_top) and os.path.exists(self.output_inpcrd):
-            logger.info(
+            logger.debug(
                 f"Topology found, skipping building {os.path.basename(self.output_pdb)}..."
             )
             return
@@ -163,7 +175,7 @@ class AMBER_param(object):
         subprocess.check_output(f"tleap -f leap.in", shell=True)
         # checking whether tleap is done
         if os.path.exists(self.output_top) and os.path.exists(self.output_inpcrd):
-            logger.info(f"Successfully built {os.path.basename(self.output_pdb)}...")
+            logger.debug(f"Successfully built {os.path.basename(self.output_pdb)}...")
             return
         else:
             raise Exception("Leap failed to build topology, check errors...")
@@ -210,6 +222,12 @@ class AMBER_param(object):
             prot_insts = " ".join(prot_insts)
             # leap.write("saveAmberParm rec apo.prmtop apo.inpcrd\n")
 
+            # load water
+            sol_name = ""
+            if self.sol_file is not None:
+                sol_name = "sol"
+                leap.write(f"{sol_name[0]} = loadPDB {self.sol_file}\n")
+
             # load ions
             ion_insts = []
             for i, ion_file in enumerate(self.ion_files):
@@ -232,7 +250,9 @@ class AMBER_param(object):
             lig_insts = " ".join(lig_insts)
 
             # leap.write("saveAmberParm lig lig.prmtop lig.inpcrd\n")
-            combine_insts = prot_insts + " " + ion_insts + " " + lig_insts
+            combine_insts = (
+                prot_insts + " " + ion_insts + " " + lig_insts + " " + sol_name
+            )
             leap.write(f"comp = combine {{ {combine_insts} }}\n")
             if self.add_sol:
                 leap.write(
