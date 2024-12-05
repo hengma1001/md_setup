@@ -130,7 +130,7 @@ class GMX_param(object):
             tsk = subprocess.Popen(
                 command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
             )
-            self.gro = {self.pdb[:-3] + self.conf_format}
+            self.gro = self.pdb[:-3] + self.conf_format
 
         os.system("rm \\#*")
 
